@@ -3,17 +3,78 @@ package evolution;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.junit.Test;
-
 public class CodeWriter {
 	private Scope scope; 
 	private List<String> annotations;
 	private String clazz;
+	private List<IField> iFields;
+	private String extend;
+	private List<String> imports;
+	
+	public List<String> getImports() {
+		return imports;
+	}
+
+	public void setImports(List<String> imports) {
+		this.imports = imports;
+	}
+
+	public String getExtend() {
+		return extend;
+	}
+
+	public void setExtend(String extend) {
+		this.extend = extend;
+	}
+
+	public List<String> getImplement() {
+		return implement;
+	}
+
+	public void setImplement(List<String> implement) {
+		this.implement = implement;
+	}
+
+	private List<String> implement;
+	
+	public CodeWriter field(Field field) {
+		return field(field.getName());
+	}
+	
+	public CodeWriter field(String fieldName) {
+		IField iField = new IField();
+		iField.setFieldName(fieldName);
+		this.iFields.add(iField);
+		this.scope = Scope.FIELD;
+		return this;
+	}
+	
+	public CodeWriter type(Class<?> type) {
+		addImport(type);
+		return type(type.getSimpleName());
+	}
+	
+	public CodeWriter type(String type) {
+		IField iField = getLastIField();
+		iField.setType(type);
+		return this;
+	}
+	
+	public List<IField> getiFields() {
+		return iFields;
+	}
+
+	public void setiFields(List<IField> iFields) {
+		this.iFields = iFields;
+	}
+
 	private List<IMethod> iMethods;
 	private BufferedWriter bufferedWriter;
 	private int indentCount = 0;
@@ -22,16 +83,20 @@ public class CodeWriter {
 		this.iMethods = new LinkedList<>();
 		this.scope = Scope.CLASS;
 		this.annotations = new LinkedList<>();
+		this.iFields = new LinkedList<>();
+		this.implement = new LinkedList<>();
+		this.imports = new LinkedList<>();
 	}
 
 	public CodeWriter annotation(List<String> annotations) {
 		if (this.scope == Scope.METHOD) {
 			IMethod iMethod = this.getLastIMethod();
-			for (String annotation : annotations) {
-				iMethod.getAnnotations().add(annotation);
-			}
-		} else {
+			iMethod.getAnnotations().addAll(annotations);
+		} else if (this.scope == Scope.CLASS) {
 			this.annotations.addAll(annotations);
+		} else if (this.scope == Scope.FIELD) {
+			IField iField = this.getLastIField();
+			iField.getAnnotations().addAll(annotations);
 		}
 		return this;
 	}
@@ -58,8 +123,28 @@ public class CodeWriter {
 		}
 	}
 
-	public CodeWriter clazz(String clazz) {
-		this.clazz = capitalizeFirstChar(clazz);
+	public CodeWriter extend(String extend) {
+		this.extend = extend;
+		return this;
+	}
+	
+	public CodeWriter implement(String... implement) {
+		this.implement.addAll(Arrays.asList(implement));
+		return this;
+	}
+	
+	public void addImport(Class<?> clazz) {
+		this.imports.add("import " + clazz.getName());
+	}
+	
+	public CodeWriter clazz(Class<?> clazz) {
+		addImport(clazz);
+		return clazz(clazz.getSimpleName());
+	}
+	
+	public CodeWriter clazz(String className) {
+		this.clazz = capitalizeFirstChar(className);
+		this.scope = Scope.CLASS;
 		return this;
 	}
 
@@ -70,12 +155,17 @@ public class CodeWriter {
 	public String getClazz() {
 		return clazz;
 	}
+	
 	public List<IMethod> getiMethods() {
 		return iMethods;
 	}
 	
 	public IMethod getLastIMethod() {
 		return this.iMethods.get(this.iMethods.size() - 1);
+	}
+	
+	public IField getLastIField() {
+		return this.iFields.get(this.iFields.size() - 1);
 	}
 	
 	public Scope getScope() {
@@ -90,6 +180,18 @@ public class CodeWriter {
 		return indents.toString();
 	}
 	
+	public CodeWriter method(String prefix, Method method) {
+		return method(prefix, method.getName());
+	}
+	
+	public CodeWriter method(String prefix, String methodName) {
+		return method(prefix + capitalizeFirstChar(methodName));
+	}
+	
+	public CodeWriter method(Method method) {
+		return method(method.getName());
+	}
+	
 	public CodeWriter method(String methodName) {
 		IMethod imethod = new IMethod();
 		imethod.setMethodName(methodName);
@@ -98,11 +200,21 @@ public class CodeWriter {
 		return this;
 	}
 	
+	public CodeWriter parameter(Class<?> parameterClass, String parameterName) {
+		addImport(parameterClass);
+		return parameter(parameterClass.getSimpleName(), parameterName);
+	}
+	
 	public CodeWriter parameter(String parameterClass, String parameterName) {
 		IMethod iMethod = getLastIMethod();
 		iMethod.getParameters().put(parameterClass, parameterName);
 		return this;
 	} 
+	
+	public CodeWriter returnType(Class<?> returnType) {
+		addImport(returnType);
+		return returnType(returnType.getSimpleName());
+	}
 	
 	public CodeWriter returnType(String returnType) {
 		IMethod iMethod = getLastIMethod();
@@ -124,27 +236,6 @@ public class CodeWriter {
 	
 	public void setScope(Scope scope) {
 		this.scope = scope;
-	}
-	
-	@Test
-	public void test() throws Exception {
-		CodeWriter codeWriter = new CodeWriter();
-		codeWriter.clazz("AnyClass")
-		.annotation("@RestController")
-		.method("anyMethod")
-		.parameter("String", "string").parameter("Date", "date")
-		.body("System.out.println(\"Hello World\");")
-		.body("int i = 0;", "int j = 0;")
-		.body("for (int k = 0; k < 10; k++) {")
-		.body("i++;")
-		.body("}")
-		.returnType("Date")
-		.method("anotherMethod")
-		.method("theOtherMethod")
-		.annotation("@Test")
-		.annotation("@PostMapping(\"/post\")");
-		System.out.println(codeWriter);
-		codeWriter.writeJava("/Users/chenli/Desktop");
 	}
 	
 	@Override
@@ -172,13 +263,37 @@ public class CodeWriter {
 		File file = new File(filePath + "/" + this.clazz + ".java");
 		FileWriter fileWriter = new FileWriter(file);
 		this.bufferedWriter = new BufferedWriter(fileWriter);
-		// Write Code
+		// Import
+		for (String myImport : this.imports) {
+			write(myImport);
+		}
+		writeln();
+		// Class
 		// Class Annotations
 		for (String annotation : this.annotations) {
 			write(annotation);
 		}
 		// Class Signature
-		write("public class " + this.clazz + " {");
+		StringBuilder extendAndImplement = new StringBuilder();
+		if (this.extend != null) {
+			extendAndImplement.append("extends " + this.extend + " ");
+		}
+		if (this.implement != null) {
+			extendAndImplement.append("implements ");
+			for (String implement : this.implement) {
+				extendAndImplement.append(implement + ", ");
+			}
+		}
+		write("public class " + this.clazz + " " + extendAndImplement.substring(0, extendAndImplement.length() - 2) +" {");
+		// Field
+		for (IField iField : this.iFields) {
+			for (String annotation : iField.getAnnotations()) {
+				write(annotation);
+			}
+			write("private " + iField.getType() + " " + iField.getFieldName() + ";");
+			writeln();
+		}
+		// Method
 		for (IMethod iMethod : this.iMethods) {
 			// Method Annotations
 			for (String annotation : iMethod.getAnnotations()) {
