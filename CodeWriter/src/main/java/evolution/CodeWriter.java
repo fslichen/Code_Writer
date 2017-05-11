@@ -13,14 +13,119 @@ import org.junit.Test;
 public class CodeWriter {
 	private Scope scope; 
 	private List<String> annotations;
+	private String clazz;
+	private List<IMethod> iMethods;
+	private BufferedWriter bufferedWriter;
+	private int indentCount = 0;
+
+	public CodeWriter() {
+		this.iMethods = new LinkedList<>();
+		this.scope = Scope.CLASS;
+		this.annotations = new LinkedList<>();
+	}
+
+	public CodeWriter annotation(List<String> annotations) {
+		if (this.scope == Scope.METHOD) {
+			IMethod iMethod = this.getLastIMethod();
+			for (String annotation : annotations) {
+				iMethod.getAnnotations().add(annotation);
+			}
+		} else {
+			this.annotations.addAll(annotations);
+		}
+		return this;
+	}
+	
+	public CodeWriter annotation(String... annotations) {
+		return annotation(Arrays.asList(annotations));
+	}
+
+	public CodeWriter body(List<String> methodBody) {
+		IMethod iMethod = getLastIMethod();
+		iMethod.getMethodBody().addAll(methodBody);
+		return this;
+	}
+
+	public CodeWriter body(String... methodBody) {
+		return body(Arrays.asList(methodBody));
+	}
+
+	public String capitalizeFirstChar(String string) {
+		try {
+			return string.substring(0, 1).toUpperCase() + string.substring(1);
+		} catch (Exception e) {// The class name consists of only one character.
+			return string.toUpperCase();
+		}
+	}
+
+	public CodeWriter clazz(String clazz) {
+		this.clazz = capitalizeFirstChar(clazz);
+		return this;
+	}
+
 	public List<String> getAnnotations() {
 		return annotations;
 	}
 
+	public String getClazz() {
+		return clazz;
+	}
+	public List<IMethod> getiMethods() {
+		return iMethods;
+	}
+	
+	public IMethod getLastIMethod() {
+		return this.iMethods.get(this.iMethods.size() - 1);
+	}
+	
+	public Scope getScope() {
+		return scope;
+	}
+	
+	public String indent(int count) {
+		StringBuilder indents = new StringBuilder();
+		for (int i = 0; i < count; i++) {
+			indents.append("    ");
+		}
+		return indents.toString();
+	}
+	
+	public CodeWriter method(String methodName) {
+		IMethod imethod = new IMethod();
+		imethod.setMethodName(methodName);
+		this.iMethods.add(imethod);
+		this.scope = Scope.METHOD;
+		return this;
+	}
+	
+	public CodeWriter parameter(String parameterClass, String parameterName) {
+		IMethod iMethod = getLastIMethod();
+		iMethod.getParameters().put(parameterClass, parameterName);
+		return this;
+	} 
+	
+	public CodeWriter returnType(String returnType) {
+		IMethod iMethod = getLastIMethod();
+		iMethod.setReturnType(returnType);
+		return this;
+	}
+	
 	public void setAnnotations(List<String> annotations) {
 		this.annotations = annotations;
 	}
-
+	
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
+	}
+	
+	public void setiMethods(List<IMethod> iMethods) {
+		this.iMethods = iMethods;
+	}
+	
+	public void setScope(Scope scope) {
+		this.scope = scope;
+	}
+	
 	@Test
 	public void test() throws Exception {
 		CodeWriter codeWriter = new CodeWriter();
@@ -42,111 +147,12 @@ public class CodeWriter {
 		codeWriter.writeJava("/Users/chenli/Desktop");
 	}
 	
-	public Scope getScope() {
-		return scope;
-	}
-
-	public void setScope(Scope scope) {
-		this.scope = scope;
-	}
-
-	public CodeWriter annotation(String... annotations) {
-		return annotation(Arrays.asList(annotations));
-	}
-	
-	public CodeWriter annotation(List<String> annotations) {
-		if (this.scope == Scope.METHOD) {
-			IMethod iMethod = this.getLastIMethod();
-			for (String annotation : annotations) {
-				iMethod.getAnnotations().add(annotation);
-			}
-		} else {
-			this.annotations.addAll(annotations);
-		}
-		return this;
-	}
-
-	private String clazz;
-
-	private List<IMethod> iMethods;
-
-	private BufferedWriter bufferedWriter;
-
-	public CodeWriter() {
-		this.iMethods = new LinkedList<>();
-		this.scope = Scope.CLASS;
-		this.annotations = new LinkedList<>();
-	}
-
-	public String capitalizeFirstChar(String string) {
-		try {
-			return string.substring(0, 1).toUpperCase() + string.substring(1);
-		} catch (Exception e) {// The class name consists of only one character.
-			return string.toUpperCase();
-		}
-	}
-
-	public CodeWriter clazz(String clazz) {
-		this.clazz = capitalizeFirstChar(clazz);
-		return this;
-	}
-	public String getClazz() {
-		return clazz;
-	}
-	
-	public List<IMethod> getiMethods() {
-		return iMethods;
-	}
-	
-	public IMethod getLastIMethod() {
-		return this.iMethods.get(this.iMethods.size() - 1);
-	}
-	
-	public CodeWriter method(String methodName) {
-		IMethod imethod = new IMethod();
-		imethod.setMethodName(methodName);
-		this.iMethods.add(imethod);
-		this.scope = Scope.METHOD;
-		return this;
-	}
-	
-	public CodeWriter parameter(String parameterClass, String parameterName) {
-		IMethod iMethod = getLastIMethod();
-		iMethod.getParameters().put(parameterClass, parameterName);
-		return this;
-	}
-	
-	public CodeWriter body(List<String> methodBody) {
-		IMethod iMethod = getLastIMethod();
-		iMethod.getMethodBody().addAll(methodBody);
-		return this;
-	} 
-	
-	public CodeWriter body(String... methodBody) {
-		return body(Arrays.asList(methodBody));
-	}
-	
-	public CodeWriter returnType(String returnType) {
-		IMethod iMethod = getLastIMethod();
-		iMethod.setReturnType(returnType);
-		return this;
-	}
-	
-	public void setClazz(String clazz) {
-		this.clazz = clazz;
-	}
-	
-	public void setiMethods(List<IMethod> iMethods) {
-		this.iMethods = iMethods;
-	}
-	
 	@Override
 	public String toString() {
-		return "CodeWriter [clazz=" + clazz + ", iMethods=" + iMethods + "]";
+		return "CodeWriter [scope=" + scope + ", annotations=" + annotations + ", clazz=" + clazz + ", iMethods="
+				+ iMethods + ", bufferedWriter=" + bufferedWriter + ", indentCount=" + indentCount + "]";
 	}
-	
-	private int indentCount = 0;
-	
+
 	public void write(String line) throws Exception {
 		line = line.trim();// Avoid the "{ " or "} "case.
 		if (line.lastIndexOf("}") == line.length() - 1) {
@@ -159,14 +165,6 @@ public class CodeWriter {
 		if (line.lastIndexOf("{") == line.length() - 1) {
 			this.indentCount++;
 		} 
-	}
-	
-	public String indent(int count) {
-		StringBuilder indents = new StringBuilder();
-		for (int i = 0; i < count; i++) {
-			indents.append("    ");
-		}
-		return indents.toString();
 	}
 	
 	public void writeJava(String filePath) throws Exception {

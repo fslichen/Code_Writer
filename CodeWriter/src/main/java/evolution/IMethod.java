@@ -7,32 +7,26 @@ import java.util.Map;
 
 public class IMethod {
 	private List<String> annotations;
-	
-
-	public List<String> getAnnotations() {
-		return annotations;
-	}
-
-	public void setAnnotations(List<String> annotations) {
-		this.annotations = annotations;
-	}
-
 	private String methodName;
 	private Map<String, String> parameters;
 	private List<String> methodBody;
 	private String returnType;
-
+	
 	public IMethod() {
 		this.parameters = new LinkedHashMap<>();
 		this.methodBody = new LinkedList<>();
 		this.returnType = "void";// Set the return type as void by default.
 		this.annotations = new LinkedList<>();
 	}
+	
+	public List<String> getAnnotations() {
+		return annotations;
+	}
 
 	public List<String> getMethodBody() {
 		return methodBody;
 	}
-	
+
 	public String getMethodName() {
 		return methodName;
 	}
@@ -43,6 +37,10 @@ public class IMethod {
 	
 	public String getReturnType() {
 		return returnType;
+	}
+	
+	public void setAnnotations(List<String> annotations) {
+		this.annotations = annotations;
 	}
 	
 	public void setMethodBody(List<String> methodBody) {
