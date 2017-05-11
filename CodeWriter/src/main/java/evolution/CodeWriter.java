@@ -17,7 +17,21 @@ public class CodeWriter {
 	private List<IField> iFields;
 	private String extend;
 	private List<String> imports;
+	private String packet;
 	
+	public CodeWriter packet(String packet) {
+		this.packet = packet;
+		return this;
+	}
+	
+	public String getPacket() {
+		return packet;
+	}
+
+	public void setPacket(String packet) {
+		this.packet = packet;
+	}
+
 	public List<String> getImports() {
 		return imports;
 	}
@@ -134,7 +148,7 @@ public class CodeWriter {
 	}
 	
 	public void addImport(Class<?> clazz) {
-		this.imports.add("import " + clazz.getName());
+		this.imports.add("import " + clazz.getName() + ";");
 	}
 	
 	public CodeWriter clazz(Class<?> clazz) {
@@ -246,14 +260,14 @@ public class CodeWriter {
 
 	public void write(String line) throws Exception {
 		line = line.trim();// Avoid the "{ " or "} "case.
-		if (line.lastIndexOf("}") == line.length() - 1) {
+		if (line.length() >0 && line.charAt(line.length() - 1) == '}') {
 			this.indentCount--;
 			if (this.indentCount < 0) {
 				this.indentCount = 0;
 			}
 		}
 		this.bufferedWriter.write(indent(this.indentCount) + line + "\n");
-		if (line.lastIndexOf("{") == line.length() - 1) {
+		if (line.length() > 0 && line.charAt(line.length() - 1) == '{') {
 			this.indentCount++;
 		} 
 	}
@@ -263,6 +277,11 @@ public class CodeWriter {
 		File file = new File(filePath + "/" + this.clazz + ".java");
 		FileWriter fileWriter = new FileWriter(file);
 		this.bufferedWriter = new BufferedWriter(fileWriter);
+		// Package
+		if (this.packet != null) {
+			write("package " + this.packet + ";");
+			writeln();
+		}
 		// Import
 		for (String myImport : this.imports) {
 			write(myImport);

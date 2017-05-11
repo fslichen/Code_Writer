@@ -7,7 +7,8 @@ public class CodeWriterTest {
 	@Test
 	public void test() throws Exception {
 		CodeWriter codeWriter = new CodeWriter();
-		codeWriter.clazz("AnyClass")
+		codeWriter.packet("com.evolution")
+		.clazz("AnyClass")
 		.annotation("@RestController")
 		.extend("SuperClass").implement("Serializable", "Cloneable")
 		.field("name").annotation("@Autowired").type("String")
