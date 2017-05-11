@@ -286,7 +286,9 @@ public class CodeWriter {
 		for (String myImport : this.imports) {
 			write(myImport);
 		}
-		writeln();
+		if (this.getImports() != null && this.getImports().size() > 0) {
+			writeln();
+		}
 		// Class
 		// Class Annotations
 		for (String annotation : this.annotations) {
@@ -297,13 +299,13 @@ public class CodeWriter {
 		if (this.extend != null) {
 			extendAndImplement.append("extends " + this.extend + " ");
 		}
-		if (this.implement != null) {
+		if (this.getImplement() != null && this.getImplement().size() > 0) {
 			extendAndImplement.append("implements ");
 			for (String implement : this.implement) {
 				extendAndImplement.append(implement + ", ");
 			}
 		}
-		write("public class " + this.clazz + " " + extendAndImplement.substring(0, extendAndImplement.length() - 2) +" {");
+		write("public class " + this.clazz + " " + (extendAndImplement.length() == 0 ? "" : extendAndImplement.substring(0, extendAndImplement.length() - 2)) +" {");
 		// Field
 		for (IField iField : this.iFields) {
 			for (String annotation : iField.getAnnotations()) {
