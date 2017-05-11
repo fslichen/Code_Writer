@@ -11,10 +11,21 @@ import java.util.Map.Entry;
 import org.junit.Test;
 
 public class CodeWriter {
+	private Scope scope; 
+	private List<String> annotations;
+	public List<String> getAnnotations() {
+		return annotations;
+	}
+
+	public void setAnnotations(List<String> annotations) {
+		this.annotations = annotations;
+	}
+
 	@Test
 	public void test() throws Exception {
 		CodeWriter codeWriter = new CodeWriter();
 		codeWriter.clazz("AnyClass")
+		.annotation("@RestController")
 		.method("anyMethod")
 		.parameter("String", "string").parameter("Date", "date")
 		.body("System.out.println(\"Hello World\");")
@@ -31,18 +42,26 @@ public class CodeWriter {
 		codeWriter.writeJava("/Users/chenli/Desktop");
 	}
 	
+	public Scope getScope() {
+		return scope;
+	}
+
+	public void setScope(Scope scope) {
+		this.scope = scope;
+	}
+
 	public CodeWriter annotation(String... annotations) {
 		return annotation(Arrays.asList(annotations));
 	}
 	
-	public String fixAnnotation(String annotation) {
-		return annotation.charAt(0) != '@' ? '@' + annotation : annotation; 
-	}
-	
 	public CodeWriter annotation(List<String> annotations) {
-		IMethod iMethod = this.getLastIMethod();
-		for (String annotation : annotations) {
-			iMethod.getAnnotations().add(fixAnnotation(annotation));
+		if (this.scope == Scope.METHOD) {
+			IMethod iMethod = this.getLastIMethod();
+			for (String annotation : annotations) {
+				iMethod.getAnnotations().add(annotation);
+			}
+		} else {
+			this.annotations.addAll(annotations);
 		}
 		return this;
 	}
@@ -55,6 +74,8 @@ public class CodeWriter {
 
 	public CodeWriter() {
 		this.iMethods = new LinkedList<>();
+		this.scope = Scope.CLASS;
+		this.annotations = new LinkedList<>();
 	}
 
 	public String capitalizeFirstChar(String string) {
@@ -85,6 +106,7 @@ public class CodeWriter {
 		IMethod imethod = new IMethod();
 		imethod.setMethodName(methodName);
 		this.iMethods.add(imethod);
+		this.scope = Scope.METHOD;
 		return this;
 	}
 	
@@ -153,16 +175,21 @@ public class CodeWriter {
 		FileWriter fileWriter = new FileWriter(file);
 		this.bufferedWriter = new BufferedWriter(fileWriter);
 		// Write Code
+		// Class Annotations
+		for (String annotation : this.annotations) {
+			write(annotation);
+		}
+		// Class Signature
 		write("public class " + this.clazz + " {");
 		for (IMethod iMethod : this.iMethods) {
+			// Method Annotations
+			for (String annotation : iMethod.getAnnotations()) {
+				write(annotation);
+			}
 			// Method Parameters
 			StringBuilder parameters = new StringBuilder();
 			for (Entry<String, String> entry : iMethod.getParameters().entrySet()) {
 				parameters.append(entry.getKey() + " " + entry.getValue() + ", ");// Fix the ", " format.
-			}
-			// Method Annotation
-			for (String annotation : iMethod.getAnnotations()) {
-				write(annotation);
 			}
 			// Method Signature
 			write("public " + iMethod.getReturnType() + " " + iMethod.getMethodName() + "("
