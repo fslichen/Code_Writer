@@ -35,13 +35,14 @@ public class CodeWriter {
 		return annotation(Arrays.asList(annotations));
 	}
 	
+	public String fixAnnotation(String annotation) {
+		return annotation.charAt(0) != '@' ? '@' + annotation : annotation; 
+	}
+	
 	public CodeWriter annotation(List<String> annotations) {
 		IMethod iMethod = this.getLastIMethod();
 		for (String annotation : annotations) {
-			if (annotation.charAt(0) != '@') {
-				annotation = '@' + annotation;
-			}
-			iMethod.getAnnotations().add(annotation);
+			iMethod.getAnnotations().add(fixAnnotation(annotation));
 		}
 		return this;
 	}
