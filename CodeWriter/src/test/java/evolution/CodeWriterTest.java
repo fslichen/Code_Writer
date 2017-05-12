@@ -12,7 +12,7 @@ public class CodeWriterTest {
 		.annotation("@RestController")
 		.extend("SuperClass").implement("Serializable", "Cloneable")
 		.field("name").annotation("@Autowired").type("String")
-		.field("gender").annotation("@Value").type("Boolean")
+		.field(Boolean.class, "gender").annotation("@Value")
 		.method("anyMethod")
 		.parameter(String.class, "string").parameter("Date", "date")
 		.body("System.out.println(\"Hello World\");")

@@ -59,7 +59,13 @@ public class CodeWriter {
 	private List<String> implement;
 	
 	public CodeWriter field(Field field) {
-		return field(field.getName());
+		return field(field.getType(), field.getName());
+	}
+	
+	public CodeWriter field(Class<?> returnType, String fieldName) {
+		field(fieldName);
+		type(returnType);
+		return this;
 	}
 	
 	public CodeWriter field(String fieldName) {
