@@ -6,9 +6,11 @@ import java.io.FileWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class CodeWriter {
 	private Scope scope; 
@@ -16,7 +18,7 @@ public class CodeWriter {
 	private String clazz;
 	private List<IField> iFields;
 	private String extend;
-	private List<String> imports;
+	private Set<String> imports;
 	private String packet;
 	
 	public CodeWriter packet(String packet) {
@@ -32,11 +34,11 @@ public class CodeWriter {
 		this.packet = packet;
 	}
 
-	public List<String> getImports() {
+	public Set<String> getImports() {
 		return imports;
 	}
 
-	public void setImports(List<String> imports) {
+	public void setImports(Set<String> imports) {
 		this.imports = imports;
 	}
 
@@ -66,6 +68,14 @@ public class CodeWriter {
 		field(fieldName);
 		type(returnType);
 		return this;
+	}
+	
+	public String lowerFirstChar(String string) {
+		try {
+			return string.substring(0, 1).toLowerCase() + string.substring(1);
+		} catch (Exception e) {
+			return string.toLowerCase();
+		}
 	}
 	
 	public CodeWriter field(String fieldName) {
@@ -105,7 +115,7 @@ public class CodeWriter {
 		this.annotations = new LinkedList<>();
 		this.iFields = new LinkedList<>();
 		this.implement = new LinkedList<>();
-		this.imports = new LinkedList<>();
+		this.imports = new LinkedHashSet<>();
 	}
 
 	public CodeWriter annotation(List<String> annotations) {
@@ -153,8 +163,16 @@ public class CodeWriter {
 		return this;
 	}
 	
-	public void addImport(Class<?> clazz) {
-		this.imports.add("import " + clazz.getName() + ";");
+	public void addImport(Class<?>... classes) {
+		for (Class<?> clazz : classes) {
+			this.imports.add("import " + clazz.getName() + ";");
+		}
+	}
+	
+	public void addImport(String... classNames) {
+		for (String className : classNames) {
+			this.imports.add("import " + className + ";");
+		}
 	}
 	
 	public CodeWriter clazz(Class<?> clazz) {
