@@ -153,6 +153,12 @@ public class CodeWriter {
 		}
 	}
 
+	public CodeWriter extend(Class<?> clazz) {
+		this.extend = clazz.getSimpleName();
+		this.addImport(clazz);
+		return this;
+	}
+	
 	public CodeWriter extend(String extend) {
 		this.extend = extend;
 		return this;
@@ -321,7 +327,7 @@ public class CodeWriter {
 		// Class Signature
 		StringBuilder extendAndImplement = new StringBuilder();
 		if (this.extend != null) {
-			extendAndImplement.append("extends " + this.extend + " ");
+			extendAndImplement.append("extends " + this.extend);
 		}
 		if (this.getImplement() != null && this.getImplement().size() > 0) {
 			extendAndImplement.append("implements ");
@@ -329,7 +335,7 @@ public class CodeWriter {
 				extendAndImplement.append(implement + ", ");
 			}
 		}
-		write("public class " + this.clazz + " " + (extendAndImplement.length() == 0 ? "" : extendAndImplement.substring(0, extendAndImplement.length() - 2)) +" {");
+		write("public class " + this.clazz + " " + (extendAndImplement.length() == 0 ? "" : extendAndImplement) + " {");
 		// Field
 		for (IField iField : this.iFields) {
 			for (String annotation : iField.getAnnotations()) {
